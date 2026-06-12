@@ -19,8 +19,8 @@
   --color-danger: #ef4444;        /* Red */
   
   --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-secondary: #e2e8f0;      /* Increased contrast (WCAG AA compliant on dark backgrounds) */
+  --text-muted: #a1a1aa;          /* Increased contrast (WCAG AA compliant on dark backgrounds) */
   
   /* Spacing & Borders */
   --radius-sm: 8px;
@@ -35,6 +35,12 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
 }
 
 body {
@@ -142,6 +148,11 @@ body {
   transition: var(--transition-smooth);
   cursor: pointer;
   border: 1px solid transparent;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-family);
+  font-size: 1rem;
 }
 
 .nav-item:hover, .nav-item.active {
@@ -612,6 +623,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
   box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
 }
 
+.radio-card:has(input:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+
 .radio-card-title {
   font-weight: 600;
   font-size: 0.9rem;
@@ -970,6 +987,19 @@ tr:hover td {
   }
   .date-badge {
     width: 100%;
-    justify-content: center;
   }
 }
+
+/* Screen reader only utility class for accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+

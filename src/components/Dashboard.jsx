@@ -131,9 +131,14 @@ export default function Dashboard({ logs, activeChallenges, completedChallenges,
           <h3 className="card-title" style={{ width: '100%', justifyContent: 'flex-start' }}>
             <Target size={18} className="logo-icon" /> Monthly Target
           </h3>
-          <div className="gauge-container">
+          <div 
+            className="gauge-container"
+            role="img"
+            aria-label={`Carbon budget status: ${totalEmitted.toFixed(0)} kg CO₂e emitted out of a monthly budget of ${budget} kg.`}
+          >
             <div className="gauge-svg-wrapper">
-              <svg className="gauge-svg">
+              <svg className="gauge-svg" aria-hidden="true">
+                <title>Carbon Budget Utilization Gauge</title>
                 <circle 
                   className="gauge-bg" 
                   cx="110" 
@@ -150,7 +155,7 @@ export default function Dashboard({ logs, activeChallenges, completedChallenges,
                   strokeDashoffset={strokeDashoffset}
                 />
               </svg>
-              <div className="gauge-text-overlay">
+              <div className="gauge-text-overlay" aria-hidden="true">
                 <div className="gauge-val">{totalEmitted.toFixed(0)}</div>
                 <div className="gauge-unit">kg CO₂e</div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>

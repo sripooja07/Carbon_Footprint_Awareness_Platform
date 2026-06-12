@@ -151,7 +151,7 @@ export default function App() {
           <Leaf className="logo-icon" size={24} />
           <span className="logo-text">EcoFootprint</span>
         </div>
-        <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+        <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}>
           {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </header>
@@ -166,40 +166,44 @@ export default function App() {
         <nav style={{ flex: 1 }}>
           <ul className="nav-links">
             <li>
-              <div 
+              <button 
+                type="button"
                 className={`nav-item ${page === 'dashboard' ? 'active' : ''}`}
                 onClick={() => handleNavigate('dashboard')}
               >
                 <LayoutDashboard className="nav-icon" size={20} />
                 <span>Dashboard</span>
-              </div>
+              </button>
             </li>
             <li>
-              <div 
+              <button 
+                type="button"
                 className={`nav-item ${page === 'track' ? 'active' : ''}`}
                 onClick={() => handleNavigate('track')}
               >
                 <PlusCircle className="nav-icon" size={20} />
                 <span>Track Emissions</span>
-              </div>
+              </button>
             </li>
             <li>
-              <div 
+              <button 
+                type="button"
                 className={`nav-item ${page === 'insights' ? 'active' : ''}`}
                 onClick={() => handleNavigate('insights')}
               >
                 <Award className="nav-icon" size={20} />
                 <span>Challenges & Tips</span>
-              </div>
+              </button>
             </li>
             <li>
-              <div 
+              <button 
+                type="button"
                 className={`nav-item ${page === 'history' ? 'active' : ''}`}
                 onClick={() => handleNavigate('history')}
               >
                 <Clock className="nav-icon" size={20} />
                 <span>Log History</span>
-              </div>
+              </button>
             </li>
           </ul>
         </nav>

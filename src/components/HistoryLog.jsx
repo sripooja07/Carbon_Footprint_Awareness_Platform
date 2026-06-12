@@ -96,7 +96,8 @@ export default function HistoryLog({ logs, onDeleteLog }) {
         {logs.length > 1 && chart.points.length > 1 ? (
           <div>
             <div className="trend-chart-container">
-              <svg viewBox="0 0 600 150" className="trend-svg" preserveAspectRatio="none">
+              <svg viewBox="0 0 600 150" className="trend-svg" preserveAspectRatio="none" role="img" aria-label="Weekly carbon emissions trend graph showing your footprint over time.">
+                <title>Weekly Carbon Emissions Trend Line Graph</title>
                 <defs>
                   {/* Linear Gradient for Neon glow area under chart */}
                   <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
@@ -221,8 +222,9 @@ export default function HistoryLog({ logs, onDeleteLog }) {
                           className="delete-btn" 
                           onClick={() => onDeleteLog(log.id)}
                           title="Delete Activity"
+                          aria-label={`Delete activity: ${log.details}`}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} aria-hidden="true" />
                         </button>
                       </td>
                     </tr>

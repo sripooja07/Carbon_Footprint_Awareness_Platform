@@ -111,8 +111,10 @@ export default function Calculator({ onAddLog }) {
           <p className="welcome-subtitle">Log your activities to calculate their environmental impact in real-time.</p>
         </div>
         <div className="date-badge">
-          <Calendar size={16} />
+          <Calendar size={16} aria-hidden="true" />
+          <label htmlFor="log-date" className="sr-only">Select Activity Date</label>
           <input 
+            id="log-date"
             type="date" 
             value={date} 
             onChange={(e) => setDate(e.target.value)} 
@@ -129,45 +131,66 @@ export default function Calculator({ onAddLog }) {
       </div>
 
       {/* Tabs */}
-      <div className="tabs-header">
+      <div className="tabs-header" role="tablist" aria-label="Emission Categories">
         <button 
+          id="tab-transport"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'transport'}
+          aria-controls="panel-transport"
           className={`tab-btn ${activeTab === 'transport' ? 'active' : ''}`}
           onClick={() => setActiveTab('transport')}
         >
-          <Car size={18} /> Transport
+          <Car size={18} aria-hidden="true" /> Transport
         </button>
         <button 
+          id="tab-energy"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'energy'}
+          aria-controls="panel-energy"
           className={`tab-btn ${activeTab === 'energy' ? 'active' : ''}`}
           onClick={() => setActiveTab('energy')}
         >
-          <Zap size={18} /> Energy
+          <Zap size={18} aria-hidden="true" /> Energy
         </button>
         <button 
+          id="tab-food"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'food'}
+          aria-controls="panel-food"
           className={`tab-btn ${activeTab === 'food' ? 'active' : ''}`}
           onClick={() => setActiveTab('food')}
         >
-          <Utensils size={18} /> Diet & Food
+          <Utensils size={18} aria-hidden="true" /> Diet & Food
         </button>
         <button 
+          id="tab-shopping"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'shopping'}
+          aria-controls="panel-shopping"
           className={`tab-btn ${activeTab === 'shopping' ? 'active' : ''}`}
           onClick={() => setActiveTab('shopping')}
         >
-          <ShoppingBag size={18} /> Shopping & Waste
+          <ShoppingBag size={18} aria-hidden="true" /> Shopping & Waste
         </button>
       </div>
 
       <div className="glass-panel card-content">
         <form onSubmit={handleSubmit}>
           
-          {/* TRANSPORT TAB */}
+          {/* TRANSPORT TAB PANEL */}
           {activeTab === 'transport' && (
-            <div>
+            <div id="panel-transport" role="tabpanel" aria-labelledby="tab-transport">
               <div className="form-group">
-                <label className="form-label">
+                <label htmlFor="transport-type" className="form-label">
                   Transportation Mode
                   <span className="form-label-desc">Select how you traveled</span>
                 </label>
                 <select 
+                  id="transport-type"
                   value={transportType} 
                   onChange={(e) => setTransportType(e.target.value)}
                 >
@@ -184,11 +207,12 @@ export default function Calculator({ onAddLog }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">
+                <label htmlFor="transport-distance" className="form-label">
                   Distance Traveled
                   <span className="form-label-value">{distance} km</span>
                 </label>
                 <input 
+                  id="transport-distance"
                   type="range" 
                   min="1" 
                   max={transportType.includes('flight') ? "5000" : "500"} 
@@ -204,15 +228,16 @@ export default function Calculator({ onAddLog }) {
             </div>
           )}
 
-          {/* ENERGY TAB */}
+          {/* ENERGY TAB PANEL */}
           {activeTab === 'energy' && (
-            <div>
+            <div id="panel-energy" role="tabpanel" aria-labelledby="tab-energy">
               <div className="form-group">
-                <label className="form-label">
+                <label htmlFor="energy-type" className="form-label">
                   Energy Source
                   <span className="form-label-desc">Utility billing category</span>
                 </label>
                 <select 
+                  id="energy-type"
                   value={energyType} 
                   onChange={(e) => setEnergyType(e.target.value)}
                 >
@@ -224,11 +249,12 @@ export default function Calculator({ onAddLog }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">
+                <label htmlFor="energy-amount" className="form-label">
                   Usage Amount
                   <span className="form-label-value">{energyAmount} {getUnit(energyType)}</span>
                 </label>
                 <input 
+                  id="energy-amount"
                   type="range" 
                   min="5" 
                   max="1000" 
@@ -244,68 +270,104 @@ export default function Calculator({ onAddLog }) {
             </div>
           )}
 
-          {/* DIET & FOOD TAB */}
+          {/* DIET & FOOD TAB PANEL */}
           {activeTab === 'food' && (
-            <div>
+            <div id="panel-food" role="tabpanel" aria-labelledby="tab-food">
               <div className="form-group">
-                <label className="form-label" style={{ marginBottom: '1.25rem' }}>
+                <span className="form-label" id="diet-group-label" style={{ marginBottom: '1.25rem' }}>
                   Diet Profile
                   <span className="form-label-desc">Which best describes your eating habits?</span>
-                </label>
-                <div className="radio-grid">
-                  <div 
+                </span>
+                <div className="radio-grid" role="radiogroup" aria-labelledby="diet-group-label">
+                  <label 
                     className={`radio-card ${foodType === 'heavy_meat' ? 'selected' : ''}`}
-                    onClick={() => setFoodType('heavy_meat')}
                   >
-                    <span style={{ fontSize: '1.5rem' }}>🥩</span>
+                    <input 
+                      type="radio" 
+                      name="foodType" 
+                      value="heavy_meat" 
+                      checked={foodType === 'heavy_meat'} 
+                      onChange={() => setFoodType('heavy_meat')}
+                      className="sr-only"
+                    />
+                    <span style={{ fontSize: '1.5rem' }} aria-hidden="true">🥩</span>
                     <span className="radio-card-title">Heavy Meat</span>
                     <span className="radio-card-desc">Meat in almost every meal</span>
-                  </div>
+                  </label>
 
-                  <div 
+                  <label 
                     className={`radio-card ${foodType === 'medium_meat' ? 'selected' : ''}`}
-                    onClick={() => setFoodType('medium_meat')}
                   >
-                    <span style={{ fontSize: '1.5rem' }}>🍗</span>
+                    <input 
+                      type="radio" 
+                      name="foodType" 
+                      value="medium_meat" 
+                      checked={foodType === 'medium_meat'} 
+                      onChange={() => setFoodType('medium_meat')}
+                      className="sr-only"
+                    />
+                    <span style={{ fontSize: '1.5rem' }} aria-hidden="true">🍗</span>
                     <span className="radio-card-title">Medium Meat</span>
                     <span className="radio-card-desc">Average meat consumption</span>
-                  </div>
+                  </label>
 
-                  <div 
+                  <label 
                     className={`radio-card ${foodType === 'low_meat' ? 'selected' : ''}`}
-                    onClick={() => setFoodType('low_meat')}
                   >
-                    <span style={{ fontSize: '1.5rem' }}>🐟</span>
+                    <input 
+                      type="radio" 
+                      name="foodType" 
+                      value="low_meat" 
+                      checked={foodType === 'low_meat'} 
+                      onChange={() => setFoodType('low_meat')}
+                      className="sr-only"
+                    />
+                    <span style={{ fontSize: '1.5rem' }} aria-hidden="true">🐟</span>
                     <span className="radio-card-title">Low Meat</span>
                     <span className="radio-card-desc">Poultry/fish, red meat rarely</span>
-                  </div>
+                  </label>
 
-                  <div 
+                  <label 
                     className={`radio-card ${foodType === 'vegetarian' ? 'selected' : ''}`}
-                    onClick={() => setFoodType('vegetarian')}
                   >
-                    <span style={{ fontSize: '1.5rem' }}>🥚</span>
+                    <input 
+                      type="radio" 
+                      name="foodType" 
+                      value="vegetarian" 
+                      checked={foodType === 'vegetarian'} 
+                      onChange={() => setFoodType('vegetarian')}
+                      className="sr-only"
+                    />
+                    <span style={{ fontSize: '1.5rem' }} aria-hidden="true">🥚</span>
                     <span className="radio-card-title">Vegetarian</span>
                     <span className="radio-card-desc">No meat, includes dairy/eggs</span>
-                  </div>
+                  </label>
 
-                  <div 
+                  <label 
                     className={`radio-card ${foodType === 'vegan' ? 'selected' : ''}`}
-                    onClick={() => setFoodType('vegan')}
                   >
-                    <span style={{ fontSize: '1.5rem' }}>🌱</span>
+                    <input 
+                      type="radio" 
+                      name="foodType" 
+                      value="vegan" 
+                      checked={foodType === 'vegan'} 
+                      onChange={() => setFoodType('vegan')}
+                      className="sr-only"
+                    />
+                    <span style={{ fontSize: '1.5rem' }} aria-hidden="true">🌱</span>
                     <span className="radio-card-title">Vegan</span>
                     <span className="radio-card-desc">Plant-based exclusively</span>
-                  </div>
+                  </label>
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label">
+                <label htmlFor="food-days" className="form-label">
                   Duration
                   <span className="form-label-value">{foodDays} days</span>
                 </label>
                 <input 
+                  id="food-days"
                   type="range" 
                   min="1" 
                   max="30" 
@@ -321,15 +383,16 @@ export default function Calculator({ onAddLog }) {
             </div>
           )}
 
-          {/* SHOPPING & WASTE TAB */}
+          {/* SHOPPING & WASTE TAB PANEL */}
           {activeTab === 'shopping' && (
-            <div>
+            <div id="panel-shopping" role="tabpanel" aria-labelledby="tab-shopping">
               <div className="form-group">
-                <label className="form-label">
+                <label htmlFor="shopping-category" className="form-label">
                   Category
                   <span className="form-label-desc">Select purchased items or waste logging</span>
                 </label>
                 <select 
+                  id="shopping-category"
                   value={shoppingCategory} 
                   onChange={(e) => setShoppingCategory(e.target.value)}
                 >
@@ -343,11 +406,12 @@ export default function Calculator({ onAddLog }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">
+                <label htmlFor="shopping-qty" className="form-label">
                   Quantity
                   <span className="form-label-value">{shoppingQty} {getUnit(shoppingCategory)}</span>
                 </label>
                 <input 
+                  id="shopping-qty"
                   type="range" 
                   min="1" 
                   max="10" 
@@ -380,7 +444,7 @@ export default function Calculator({ onAddLog }) {
 
           <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
             <button type="submit" className="btn btn-primary">
-              <Plus size={18} /> Log Activity
+              <Plus size={18} aria-hidden="true" /> Log Activity
             </button>
           </div>
         </form>
@@ -389,7 +453,7 @@ export default function Calculator({ onAddLog }) {
       {/* Dynamic Recommendation Panel */}
       <div className="glass-panel card-content" style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
         <div style={{ background: 'rgba(6,182,212,0.1)', color: 'var(--color-secondary)', padding: '0.75rem', borderRadius: '50%' }}>
-          <Compass size={24} />
+          <Compass size={24} aria-hidden="true" />
         </div>
         <div>
           <h4 style={{ fontWeight: 600 }}>Real-Time Insights</h4>
@@ -404,8 +468,8 @@ export default function Calculator({ onAddLog }) {
 
       {/* Toast Notification */}
       {showToast && (
-        <div className="toast-msg">
-          <Check size={18} style={{ color: 'var(--color-primary)' }} />
+        <div className="toast-msg" role="status" aria-live="polite">
+          <Check size={18} style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
           <div>
             <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Logged Successfully!</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Added {lastLogged}</div>
