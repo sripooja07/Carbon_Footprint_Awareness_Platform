@@ -12,7 +12,7 @@ describe('App Root Component Integration', () => {
     render(<App />);
 
     // Sidebar logo texts (mobile header & sidebar)
-    const logoTexts = screen.getAllByText('Anti-Gravity');
+    const logoTexts = screen.getAllByText('Eco Friendly Tracker');
     expect(logoTexts.length).toBeGreaterThan(0);
     
     // Wait for lazy loaded Dashboard to be rendered

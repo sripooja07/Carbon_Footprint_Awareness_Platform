@@ -192,7 +192,7 @@ export default function App() {
       <header className="mobile-header">
         <div className="logo-section" style={{ margin: 0 }}>
           <Leaf className="logo-icon" size={24} aria-hidden="true" />
-          <span className="logo-text">Anti-Gravity</span>
+          <span className="logo-text">Eco Friendly Tracker</span>
         </div>
         <button 
           className="menu-toggle" 
@@ -207,7 +207,7 @@ export default function App() {
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="logo-section">
           <Leaf className="logo-icon" size={32} aria-hidden="true" style={{ filter: 'drop-shadow(0 0 8px var(--color-primary))' }} />
-          <span className="logo-text">Anti-Gravity</span>
+          <span className="logo-text">Eco Friendly Tracker</span>
         </div>
 
         <nav aria-label="Sidebar navigation" style={{ flex: 1 }}>
@@ -261,7 +261,7 @@ export default function App() {
               <User size={20} />
             </div>
             <div className="user-info">
-              <h4>Project Anti-Gravity</h4>
+              <h4>Eco Friendly Tracker</h4>
               <p>Offset: {totalOffsetSavings.toFixed(0)} kg CO₂e</p>
             </div>
           </div>
