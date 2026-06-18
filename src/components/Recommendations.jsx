@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   Award, 
   Compass, 
@@ -10,10 +10,11 @@ import {
   ShoppingBag, 
   Check, 
   Calendar,
-  ChevronRight,
   TrendingDown,
   AlertTriangle
 } from 'lucide-react';
+import Card from './ui/Card';
+import Button from './ui/Button';
 
 export default function Recommendations({ 
   logs, 
@@ -25,35 +26,45 @@ export default function Recommendations({
   onCancelChallenge 
 }) {
   
-  // Calculate category totals to generate dynamic insights
-  const categoriesSum = logs.reduce((acc, log) => {
-    acc[log.category] = (acc[log.category] || 0) + log.co2;
-    return acc;
-  }, { transport: 0, energy: 0, food: 0, shopping: 0 });
+  // Memoize category sums
+  const categoriesSum = useMemo(() => {
+    return logs.reduce((acc, log) => {
+      acc[log.category] = (acc[log.category] || 0) + log.co2;
+      return acc;
+    }, { transport: 0, energy: 0, food: 0, shopping: 0 });
+  }, [logs]);
 
-  const totalEmitted = Object.values(categoriesSum).reduce((sum, val) => sum + val, 0);
+  // Memoize total emitted
+  const totalEmitted = useMemo(() => {
+    return Object.values(categoriesSum).reduce((sum, val) => sum + val, 0);
+  }, [categoriesSum]);
 
-  // Find the highest emissions category
-  let highestCategory = 'none';
-  let highestValue = 0;
-  Object.keys(categoriesSum).forEach(cat => {
-    if (categoriesSum[cat] > highestValue) {
-      highestValue = categoriesSum[cat];
-      highestCategory = cat;
-    }
-  });
+  // Memoize highest category computation
+  const highestStats = useMemo(() => {
+    let highestCategory = 'none';
+    let highestValue = 0;
+    Object.keys(categoriesSum).forEach(cat => {
+      if (categoriesSum[cat] > highestValue) {
+        highestValue = categoriesSum[cat];
+        highestCategory = cat;
+      }
+    });
+    return { highestCategory, highestValue };
+  }, [categoriesSum]);
 
   // Category Icons & Color utilities
   const catDetails = {
-    transport: { icon: <Car size={18} />, color: 'var(--color-secondary)', label: 'Transportation' },
-    energy: { icon: <Zap size={18} />, color: 'var(--color-warning)', label: 'Home Energy' },
-    food: { icon: <Utensils size={18} />, color: 'var(--color-primary)', label: 'Diet & Food' },
-    shopping: { icon: <ShoppingBag size={18} />, color: 'var(--color-accent)', label: 'Shopping & Waste' },
-    none: { icon: <Compass size={18} />, color: 'var(--color-primary)', label: 'Allround' }
+    transport: { icon: <Car size={18} aria-hidden="true" />, color: 'var(--color-secondary)', label: 'Transportation' },
+    energy: { icon: <Zap size={18} aria-hidden="true" />, color: 'var(--color-warning)', label: 'Home Energy' },
+    food: { icon: <Utensils size={18} aria-hidden="true" />, color: 'var(--color-primary)', label: 'Diet & Food' },
+    shopping: { icon: <ShoppingBag size={18} aria-hidden="true" />, color: 'var(--color-accent)', label: 'Shopping & Waste' },
+    none: { icon: <Compass size={18} aria-hidden="true" />, color: 'var(--color-primary)', label: 'Allround' }
   };
 
-  // Generate dynamic warning card based on highest emission source
-  const getDynamicInsight = () => {
+  // Memoize dynamic insights details
+  const insight = useMemo(() => {
+    const { highestCategory, highestValue } = highestStats;
+    
     if (totalEmitted === 0) {
       return {
         title: "Start Tracking to Unlock Insights",
@@ -94,9 +105,7 @@ export default function Recommendations({
           type: 'info'
         };
     }
-  };
-
-  const insight = getDynamicInsight();
+  }, [highestStats, totalEmitted]);
 
   return (
     <div className="recommendations-view">
@@ -108,13 +117,14 @@ export default function Recommendations({
       </div>
 
       {/* Dynamic Recommendation Panel */}
-      <div 
-        className="glass-panel card-content" 
+      <Card 
+        className="glass-panel" 
         style={{ 
           marginBottom: '2.5rem',
           borderLeft: `4px solid ${insight.type === 'warning' ? 'var(--color-warning)' : 'var(--color-primary)'}`,
           background: 'linear-gradient(135deg, rgba(20,27,54,0.7) 0%, rgba(20,27,54,0.4) 100%)'
         }}
+        data-testid="insight-panel"
       >
         <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
           <div style={{ 
@@ -125,7 +135,7 @@ export default function Recommendations({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
-          }}>
+          }} aria-hidden="true">
             {insight.type === 'warning' ? <AlertTriangle size={24} /> : <Leaf size={24} />}
           </div>
           <div>
@@ -133,11 +143,11 @@ export default function Recommendations({
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: '1.6' }}>{insight.desc}</p>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Challenges Section */}
       <h2 className="section-title">
-        <Award size={20} className="logo-icon" /> Reduce Emission Challenges
+        <Award size={20} className="logo-icon" aria-hidden="true" /> Defy Emission Challenges
       </h2>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
         Commit to sustainable challenges, lower your carbon footprint, and earn points for your carbon savings account.
@@ -150,8 +160,12 @@ export default function Recommendations({
           const detail = catDetails[c.category] || catDetails.none;
 
           return (
-            <div key={c.id} className="glass-panel challenge-card">
-              <span className={`challenge-badge ${c.difficulty.toLowerCase()}`}>
+            <Card 
+              key={c.id} 
+              className="challenge-card"
+              data-testid={`challenge-card-${c.id}`}
+            >
+              <span className={`challenge-badge ${c.difficulty.toLowerCase()}`} style={{ zIndex: 10 }}>
                 {c.difficulty}
               </span>
 
@@ -176,7 +190,7 @@ export default function Recommendations({
                 </h3>
                 
                 <div className="challenge-saving">
-                  <TrendingDown size={16} /> Save {c.co2Savings} kg CO₂e
+                  <TrendingDown size={16} aria-hidden="true" /> Save {c.co2Savings} kg CO₂e
                 </div>
 
                 <p className="challenge-desc">
@@ -186,7 +200,7 @@ export default function Recommendations({
 
               <div className="challenge-meta-row">
                 <span className="challenge-duration">
-                  <Calendar size={14} /> {c.duration}
+                  <Calendar size={14} aria-hidden="true" /> {c.duration}
                 </span>
 
                 {isCompleted ? (
@@ -201,28 +215,30 @@ export default function Recommendations({
                     padding: '0.3rem 0.75rem',
                     borderRadius: '20px'
                   }}>
-                    <Check size={14} /> Completed
+                    <Check size={14} aria-hidden="true" /> Completed
                   </span>
                 ) : isActive ? (
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button 
-                      className="btn btn-secondary" 
+                    <Button 
+                      variant="secondary" 
                       style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', borderRadius: '8px' }}
                       onClick={() => onCancelChallenge(c.id)}
+                      ariaLabel={`Quit challenge: ${c.title}`}
                     >
                       Quit
-                    </button>
-                    <button 
-                      className="btn btn-primary" 
+                    </Button>
+                    <Button 
+                      variant="primary" 
                       style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', borderRadius: '8px' }}
                       onClick={() => onCompleteChallenge(c.id)}
+                      ariaLabel={`Complete challenge: ${c.title}`}
                     >
                       Done
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <button 
-                    className="btn btn-secondary" 
+                  <Button 
+                    variant="secondary" 
                     style={{ 
                       padding: '0.4rem 0.8rem', 
                       fontSize: '0.8rem', 
@@ -231,12 +247,13 @@ export default function Recommendations({
                       color: 'var(--color-primary)'
                     }}
                     onClick={() => onAcceptChallenge(c.id)}
+                    ariaLabel={`Commit to challenge: ${c.title}`}
                   >
                     Accept
-                  </button>
+                  </Button>
                 )}
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>

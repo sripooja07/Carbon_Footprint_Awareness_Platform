@@ -7,8 +7,7 @@ import {
   Calendar, 
   Plus, 
   Check, 
-  Compass,
-  AlertCircle
+  Compass
 } from 'lucide-react';
 import { 
   calculateTransport, 
@@ -18,11 +17,16 @@ import {
   getLabel,
   getUnit
 } from '../utils/carbonCalculations';
+import Card from './ui/Card';
+import Button from './ui/Button';
+import Select from './ui/Select';
+import Slider from './ui/Slider';
 
 export default function Calculator({ onAddLog }) {
   const [activeTab, setActiveTab] = useState('transport');
   const [showToast, setShowToast] = useState(false);
   const [lastLogged, setLastLogged] = useState('');
+  const [formError, setFormError] = useState('');
 
   // Form States
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -63,7 +67,14 @@ export default function Calculator({ onAddLog }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+    setFormError('');
+
+    // Input Validation
+    if (!date || !date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      setFormError('Please select a valid date.');
+      return;
+    }
+
     let logEntry = {
       id: 'log_' + Date.now(),
       date,
@@ -72,18 +83,34 @@ export default function Calculator({ onAddLog }) {
     };
 
     if (activeTab === 'transport') {
+      if (distance < 1 || isNaN(distance)) {
+        setFormError('Travel distance must be at least 1 km.');
+        return;
+      }
       logEntry.type = transportType;
       logEntry.amount = distance;
       logEntry.details = `${distance} km via ${getLabel(transportType)}`;
     } else if (activeTab === 'energy') {
+      if (energyAmount < 1 || isNaN(energyAmount)) {
+        setFormError('Energy amount must be at least 1 unit.');
+        return;
+      }
       logEntry.type = energyType;
       logEntry.amount = energyAmount;
       logEntry.details = `${energyAmount} ${getUnit(energyType)} of ${getLabel(energyType)}`;
     } else if (activeTab === 'food') {
+      if (foodDays < 1 || foodDays > 30 || isNaN(foodDays)) {
+        setFormError('Duration must be between 1 and 30 days.');
+        return;
+      }
       logEntry.type = foodType;
       logEntry.amount = foodDays;
       logEntry.details = `${foodDays} days of ${getLabel(foodType)}`;
     } else if (activeTab === 'shopping') {
+      if (shoppingQty < 1 || shoppingQty > 10 || isNaN(shoppingQty)) {
+        setFormError('Quantity must be between 1 and 10.');
+        return;
+      }
       logEntry.type = shoppingCategory;
       logEntry.amount = shoppingQty;
       logEntry.details = `${shoppingQty}x ${getLabel(shoppingCategory)}`;
@@ -91,12 +118,12 @@ export default function Calculator({ onAddLog }) {
 
     onAddLog(logEntry);
     
-    // Toast notification
+    // Trigger toast notification
     setLastLogged(logEntry.details);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3500);
 
-    // Reset default parameters but keep selected types
+    // Reset default parameters
     if (activeTab === 'transport') setDistance(50);
     else if (activeTab === 'energy') setEnergyAmount(150);
     else if (activeTab === 'food') setFoodDays(7);
@@ -139,7 +166,10 @@ export default function Calculator({ onAddLog }) {
           aria-selected={activeTab === 'transport'}
           aria-controls="panel-transport"
           className={`tab-btn ${activeTab === 'transport' ? 'active' : ''}`}
-          onClick={() => setActiveTab('transport')}
+          onClick={() => {
+            setActiveTab('transport');
+            setFormError('');
+          }}
         >
           <Car size={18} aria-hidden="true" /> Transport
         </button>
@@ -150,7 +180,10 @@ export default function Calculator({ onAddLog }) {
           aria-selected={activeTab === 'energy'}
           aria-controls="panel-energy"
           className={`tab-btn ${activeTab === 'energy' ? 'active' : ''}`}
-          onClick={() => setActiveTab('energy')}
+          onClick={() => {
+            setActiveTab('energy');
+            setFormError('');
+          }}
         >
           <Zap size={18} aria-hidden="true" /> Energy
         </button>
@@ -161,7 +194,10 @@ export default function Calculator({ onAddLog }) {
           aria-selected={activeTab === 'food'}
           aria-controls="panel-food"
           className={`tab-btn ${activeTab === 'food' ? 'active' : ''}`}
-          onClick={() => setActiveTab('food')}
+          onClick={() => {
+            setActiveTab('food');
+            setFormError('');
+          }}
         >
           <Utensils size={18} aria-hidden="true" /> Diet & Food
         </button>
@@ -172,101 +208,96 @@ export default function Calculator({ onAddLog }) {
           aria-selected={activeTab === 'shopping'}
           aria-controls="panel-shopping"
           className={`tab-btn ${activeTab === 'shopping' ? 'active' : ''}`}
-          onClick={() => setActiveTab('shopping')}
+          onClick={() => {
+            setActiveTab('shopping');
+            setFormError('');
+          }}
         >
           <ShoppingBag size={18} aria-hidden="true" /> Shopping & Waste
         </button>
       </div>
 
-      <div className="glass-panel card-content">
-        <form onSubmit={handleSubmit}>
-          
+      <Card>
+        <form onSubmit={handleSubmit} data-testid="emissions-form">
+          {formError && (
+            <div 
+              style={{ 
+                color: 'var(--color-danger)', 
+                backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+                padding: '0.75rem 1rem', 
+                borderRadius: '8px', 
+                marginBottom: '1.5rem',
+                fontSize: '0.9rem',
+                border: '1px solid rgba(239, 68, 68, 0.2)'
+              }} 
+              role="alert"
+            >
+              {formError}
+            </div>
+          )}
+
           {/* TRANSPORT TAB PANEL */}
           {activeTab === 'transport' && (
             <div id="panel-transport" role="tabpanel" aria-labelledby="tab-transport">
-              <div className="form-group">
-                <label htmlFor="transport-type" className="form-label">
-                  Transportation Mode
-                  <span className="form-label-desc">Select how you traveled</span>
-                </label>
-                <select 
-                  id="transport-type"
-                  value={transportType} 
-                  onChange={(e) => setTransportType(e.target.value)}
-                >
-                  <option value="car_petrol">Petrol Car</option>
-                  <option value="car_diesel">Diesel Car</option>
-                  <option value="car_hybrid">Hybrid Car</option>
-                  <option value="car_electric">Electric Car</option>
-                  <option value="motorbike">Motorbike</option>
-                  <option value="bus">Public Bus</option>
-                  <option value="train">Train</option>
-                  <option value="flight_short">Short-haul Flight (&lt; 3 hours)</option>
-                  <option value="flight_long">Long-haul Flight (&gt; 3 hours)</option>
-                </select>
-              </div>
+              <Select 
+                id="transport-type"
+                label="Transportation Mode"
+                description="Select how you traveled"
+                value={transportType}
+                onChange={(e) => setTransportType(e.target.value)}
+                options={[
+                  { value: "car_petrol", label: "Petrol Car" },
+                  { value: "car_diesel", label: "Diesel Car" },
+                  { value: "car_hybrid", label: "Hybrid Car" },
+                  { value: "car_electric", label: "Electric Car" },
+                  { value: "motorbike", label: "Motorbike" },
+                  { value: "bus", label: "Public Bus" },
+                  { value: "train", label: "Train" },
+                  { value: "flight_short", label: "Short-haul Flight (< 3 hours)" },
+                  { value: "flight_long", label: "Long-haul Flight (> 3 hours)" }
+                ]}
+              />
 
-              <div className="form-group">
-                <label htmlFor="transport-distance" className="form-label">
-                  Distance Traveled
-                  <span className="form-label-value">{distance} km</span>
-                </label>
-                <input 
-                  id="transport-distance"
-                  type="range" 
-                  min="1" 
-                  max={transportType.includes('flight') ? "5000" : "500"} 
-                  step={transportType.includes('flight') ? "50" : "5"}
-                  value={distance} 
-                  onChange={(e) => setDistance(parseInt(e.target.value))}
-                />
-                <div className="flex-between" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                  <span>1 km</span>
-                  <span>{transportType.includes('flight') ? "5000 km" : "500 km"}</span>
-                </div>
-              </div>
+              <Slider 
+                id="transport-distance"
+                label="Distance Traveled"
+                min={1}
+                max={transportType.includes('flight') ? 5000 : 500}
+                step={transportType.includes('flight') ? 50 : 5}
+                value={distance}
+                unit="km"
+                onChange={(e) => setDistance(parseInt(e.target.value))}
+              />
             </div>
           )}
 
           {/* ENERGY TAB PANEL */}
           {activeTab === 'energy' && (
             <div id="panel-energy" role="tabpanel" aria-labelledby="tab-energy">
-              <div className="form-group">
-                <label htmlFor="energy-type" className="form-label">
-                  Energy Source
-                  <span className="form-label-desc">Utility billing category</span>
-                </label>
-                <select 
-                  id="energy-type"
-                  value={energyType} 
-                  onChange={(e) => setEnergyType(e.target.value)}
-                >
-                  <option value="electricity_grid">Grid Electricity (Standard)</option>
-                  <option value="electricity_green">Renewable Electricity (100% Green Tariff)</option>
-                  <option value="natural_gas">Natural Gas</option>
-                  <option value="heating_oil">Heating Oil</option>
-                </select>
-              </div>
+              <Select 
+                id="energy-type"
+                label="Energy Source"
+                description="Utility billing category"
+                value={energyType}
+                onChange={(e) => setEnergyType(e.target.value)}
+                options={[
+                  { value: "electricity_grid", label: "Grid Electricity (Standard)" },
+                  { value: "electricity_green", label: "Renewable Electricity (100% Green Tariff)" },
+                  { value: "natural_gas", label: "Natural Gas" },
+                  { value: "heating_oil", label: "Heating Oil" }
+                ]}
+              />
 
-              <div className="form-group">
-                <label htmlFor="energy-amount" className="form-label">
-                  Usage Amount
-                  <span className="form-label-value">{energyAmount} {getUnit(energyType)}</span>
-                </label>
-                <input 
-                  id="energy-amount"
-                  type="range" 
-                  min="5" 
-                  max="1000" 
-                  step="5"
-                  value={energyAmount} 
-                  onChange={(e) => setEnergyAmount(parseInt(e.target.value))}
-                />
-                <div className="flex-between" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                  <span>5 {getUnit(energyType)}</span>
-                  <span>1000 {getUnit(energyType)}</span>
-                </div>
-              </div>
+              <Slider 
+                id="energy-amount"
+                label="Usage Amount"
+                min={5}
+                max={1000}
+                step={5}
+                value={energyAmount}
+                unit={getUnit(energyType)}
+                onChange={(e) => setEnergyAmount(parseInt(e.target.value))}
+              />
             </div>
           )}
 
@@ -361,69 +392,48 @@ export default function Calculator({ onAddLog }) {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="food-days" className="form-label">
-                  Duration
-                  <span className="form-label-value">{foodDays} days</span>
-                </label>
-                <input 
-                  id="food-days"
-                  type="range" 
-                  min="1" 
-                  max="30" 
-                  step="1"
-                  value={foodDays} 
-                  onChange={(e) => setFoodDays(parseInt(e.target.value))}
-                />
-                <div className="flex-between" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                  <span>1 day</span>
-                  <span>30 days</span>
-                </div>
-              </div>
+              <Slider 
+                id="food-days"
+                label="Duration"
+                min={1}
+                max={30}
+                step={1}
+                value={foodDays}
+                unit="days"
+                onChange={(e) => setFoodDays(parseInt(e.target.value))}
+              />
             </div>
           )}
 
           {/* SHOPPING & WASTE TAB PANEL */}
           {activeTab === 'shopping' && (
             <div id="panel-shopping" role="tabpanel" aria-labelledby="tab-shopping">
-              <div className="form-group">
-                <label htmlFor="shopping-category" className="form-label">
-                  Category
-                  <span className="form-label-desc">Select purchased items or waste logging</span>
-                </label>
-                <select 
-                  id="shopping-category"
-                  value={shoppingCategory} 
-                  onChange={(e) => setShoppingCategory(e.target.value)}
-                >
-                  <option value="clothing_item">Clothing (New apparel purchase)</option>
-                  <option value="smartphone">Smartphone (New device purchase)</option>
-                  <option value="laptop">Laptop/PC (New machine purchase)</option>
-                  <option value="furniture_item">Furniture/Home goods</option>
-                  <option value="general_waste_bag">Landfill Waste (Standard garbage bags)</option>
-                  <option value="recycling_offset">Recyclable Waste (Offset bags diverted)</option>
-                </select>
-              </div>
+              <Select 
+                id="shopping-category"
+                label="Category"
+                description="Select purchased items or waste logging"
+                value={shoppingCategory}
+                onChange={(e) => setShoppingCategory(e.target.value)}
+                options={[
+                  { value: "clothing_item", label: "Clothing (New apparel purchase)" },
+                  { value: "smartphone", label: "Smartphone (New device purchase)" },
+                  { value: "laptop", label: "Laptop/PC (New machine purchase)" },
+                  { value: "furniture_item", label: "Furniture/Home goods" },
+                  { value: "general_waste_bag", label: "Landfill Waste (Standard garbage bags)" },
+                  { value: "recycling_offset", label: "Recyclable Waste (Offset bags diverted)" }
+                ]}
+              />
 
-              <div className="form-group">
-                <label htmlFor="shopping-qty" className="form-label">
-                  Quantity
-                  <span className="form-label-value">{shoppingQty} {getUnit(shoppingCategory)}</span>
-                </label>
-                <input 
-                  id="shopping-qty"
-                  type="range" 
-                  min="1" 
-                  max="10" 
-                  step="1"
-                  value={shoppingQty} 
-                  onChange={(e) => setShoppingQty(parseInt(e.target.value))}
-                />
-                <div className="flex-between" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                  <span>1 unit</span>
-                  <span>10 units</span>
-                </div>
-              </div>
+              <Slider 
+                id="shopping-qty"
+                label="Quantity"
+                min={1}
+                max={10}
+                step={1}
+                value={shoppingQty}
+                unit={getUnit(shoppingCategory)}
+                onChange={(e) => setShoppingQty(parseInt(e.target.value))}
+              />
             </div>
           )}
 
@@ -437,18 +447,18 @@ export default function Calculator({ onAddLog }) {
                   : 'Based on global average lifecycle factors.'}
               </div>
             </div>
-            <div className="calc-banner-val">
+            <div className="calc-banner-val" data-testid="live-estimate">
               {liveEstimate.toFixed(1)} <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>kg CO₂e</span>
             </div>
           </div>
 
           <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-            <button type="submit" className="btn btn-primary">
+            <Button type="submit">
               <Plus size={18} aria-hidden="true" /> Log Activity
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
+      </Card>
 
       {/* Dynamic Recommendation Panel */}
       <div className="glass-panel card-content" style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>

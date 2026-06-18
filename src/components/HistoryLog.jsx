@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   Trash2, 
-  Calendar, 
   Car, 
   Zap, 
   Utensils, 
@@ -11,53 +10,57 @@ import {
   Clock
 } from 'lucide-react';
 import { getLabel } from '../utils/carbonCalculations';
+import Card from './ui/Card';
+import Button from './ui/Button';
 
 export default function HistoryLog({ logs, onDeleteLog }) {
-  // Sort logs by date descending (latest first)
-  const sortedLogs = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  // Memoize sorted logs (descending chronological order)
+  const sortedLogs = useMemo(() => {
+    return [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [logs]);
 
   // Category Utilities
   const categoryConfig = {
-    transport: { icon: <Car size={16} />, color: 'var(--color-secondary)', bg: 'rgba(6, 182, 212, 0.1)' },
-    energy: { icon: <Zap size={16} />, color: 'var(--color-warning)', bg: 'rgba(245, 158, 11, 0.1)' },
-    food: { icon: <Utensils size={16} />, color: 'var(--color-primary)', bg: 'rgba(16, 185, 129, 0.1)' },
-    shopping: { icon: <ShoppingBag size={16} />, color: 'var(--color-accent)', bg: 'rgba(139, 92, 246, 0.1)' }
+    transport: { icon: <Car size={16} aria-hidden="true" />, color: 'var(--color-secondary)', bg: 'rgba(6, 182, 212, 0.1)' },
+    energy: { icon: <Zap size={16} aria-hidden="true" />, color: 'var(--color-warning)', bg: 'rgba(245, 158, 11, 0.1)' },
+    food: { icon: <Utensils size={16} aria-hidden="true" />, color: 'var(--color-primary)', bg: 'rgba(16, 185, 129, 0.1)' },
+    shopping: { icon: <ShoppingBag size={16} aria-hidden="true" />, color: 'var(--color-accent)', bg: 'rgba(139, 92, 246, 0.1)' }
   };
 
-  // Prepare chart data (Group last 7 logging dates chronologically)
-  const getChartPoints = () => {
+  // Memoize vector SVG chart path coordinates and metrics calculations
+  const chart = useMemo(() => {
     if (logs.length === 0) return { path: '', area: '', points: [], dates: [] };
 
-    // Group carbon by date
+    // Group net CO2 emissions by date
     const grouped = logs.reduce((acc, log) => {
       acc[log.date] = (acc[log.date] || 0) + log.co2;
       return acc;
     }, {});
 
-    // Sort dates chronologically
+    // Sort dates chronologically and take the last 7 logging dates
     const sortedDates = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b)).slice(-7);
     const values = sortedDates.map(date => grouped[date]);
     
     if (sortedDates.length === 0) return { path: '', area: '', points: [], dates: [] };
 
-    // Chart Dimensions
+    // SVG Canvas Dimensions
     const width = 600;
     const height = 150;
     const padding = 25;
     
-    const maxVal = Math.max(...values, 10); // Minimum scale height of 10kg
+    const maxVal = Math.max(...values, 10); // Minimum scale height is 10kg
     const minVal = 0;
     const range = maxVal - minVal;
 
-    // Map data to SVG coordinates
+    // Map each data point to canvas coordinate systems
     const points = sortedDates.map((date, idx) => {
       const x = padding + (idx / Math.max(sortedDates.length - 1, 1)) * (width - 2 * padding);
-      // Invert Y axis for SVG (0,0 is top left)
+      // Invert Y axis for SVG rendering
       const y = height - padding - ((grouped[date] - minVal) / range) * (height - 2 * padding);
       return { x, y, value: grouped[date], date };
     });
 
-    // Generate Path descriptions
     let linePath = '';
     let areaPath = '';
 
@@ -67,16 +70,14 @@ export default function HistoryLog({ logs, onDeleteLog }) {
         linePath += ` L ${points[i].x} ${points[i].y}`;
       }
 
-      // Close the area path for the gradient fill
+      // Close path loop to fill area gradient
       areaPath = linePath;
       areaPath += ` L ${points[points.length - 1].x} ${height - padding}`;
       areaPath += ` L ${points[0].x} ${height - padding} Z`;
     }
 
     return { path: linePath, area: areaPath, points, dates: sortedDates };
-  };
-
-  const chart = getChartPoints();
+  }, [logs]);
 
   return (
     <div className="history-view">
@@ -88,18 +89,18 @@ export default function HistoryLog({ logs, onDeleteLog }) {
       </div>
 
       {/* Custom Trend Chart */}
-      <div className="glass-panel card-content" style={{ marginBottom: '2rem' }}>
-        <h3 className="card-title">
-          <TrendingUp size={18} className="logo-icon" /> Weekly Emissions Trend
-        </h3>
-
+      <Card 
+        title="Weekly Emissions Trend" 
+        icon={<TrendingUp size={18} />} 
+        style={{ marginBottom: '2rem' }}
+        data-testid="trend-card"
+      >
         {logs.length > 1 && chart.points.length > 1 ? (
           <div>
             <div className="trend-chart-container">
               <svg viewBox="0 0 600 150" className="trend-svg" preserveAspectRatio="none" role="img" aria-label="Weekly carbon emissions trend graph showing your footprint over time.">
                 <title>Weekly Carbon Emissions Trend Line Graph</title>
                 <defs>
-                  {/* Linear Gradient for Neon glow area under chart */}
                   <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.25" />
                     <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.0" />
@@ -167,35 +168,31 @@ export default function HistoryLog({ logs, onDeleteLog }) {
           </div>
         ) : (
           <div className="flex-center" style={{ height: '150px', color: 'var(--text-muted)', fontSize: '0.9rem', flexDirection: 'column', gap: '0.5rem' }}>
-            <Info size={24} />
+            <Info size={24} aria-hidden="true" />
             <span>Need logs across multiple dates to render trend comparison.</span>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Logs Table Card */}
-      <div className="glass-panel card-content">
-        <h3 className="card-title">
-          <Clock size={18} className="logo-icon" /> Activity Log Ledger
-        </h3>
-
+      <Card title="Activity Log Ledger" icon={<Clock size={18} />} data-testid="ledger-card">
         {sortedLogs.length > 0 ? (
           <div className="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th>Category</th>
-                  <th>Details</th>
-                  <th>Date</th>
-                  <th>Carbon CO₂e</th>
-                  <th style={{ textAlign: 'center' }}>Actions</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Details</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Carbon CO₂e</th>
+                  <th scope="col" style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedLogs.map(log => {
-                  const config = categoryConfig[log.category] || { icon: <Info />, color: 'var(--text-muted)', bg: 'rgba(255,255,255,0.05)' };
+                  const config = categoryConfig[log.category] || { icon: <Info aria-hidden="true" />, color: 'var(--text-muted)', bg: 'rgba(255,255,255,0.05)' };
                   return (
-                    <tr key={log.id}>
+                    <tr key={log.id} data-testid={`log-row-${log.id}`}>
                       <td style={{ fontWeight: 600 }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{ 
@@ -218,14 +215,17 @@ export default function HistoryLog({ logs, onDeleteLog }) {
                         {log.co2 < 0 ? '' : '+'}{log.co2.toFixed(1)} kg
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <button 
+                        <Button 
+                          variant="secondary"
                           className="delete-btn" 
                           onClick={() => onDeleteLog(log.id)}
                           title="Delete Activity"
-                          aria-label={`Delete activity: ${log.details}`}
+                          ariaLabel={`Delete activity: ${log.details}`}
+                          data-testid={`delete-btn-${log.id}`}
+                          style={{ minWidth: 'auto', padding: '0.4rem' }}
                         >
                           <Trash2 size={16} aria-hidden="true" />
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -235,12 +235,12 @@ export default function HistoryLog({ logs, onDeleteLog }) {
           </div>
         ) : (
           <div className="empty-state">
-            <Clock size={40} className="empty-icon" />
+            <Clock size={40} className="empty-icon" aria-hidden="true" />
             <h3>No activities logged yet</h3>
             <p style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>Your carbon ledger is currently empty. Activities logged under tracking will show up here.</p>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
